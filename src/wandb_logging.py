@@ -10,7 +10,7 @@ class WandbLogger:
             config["gpu"] = gpu
 
             wandb.init(
-                project="gpt-project",
+                project="zpd-project",
                 config=config
             )
 
