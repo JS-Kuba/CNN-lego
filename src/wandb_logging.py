@@ -45,16 +45,19 @@ class WandbLogger:
         if not self.disable_logging:
             wandb.log({"precision": precision})
 
-    def log_roc_curve(self, class_true_labels, class_scores, class_label):
+    def log_roc_curve(self, class_true_labels, class_scores, class_label, tag):
         if not self.disable_logging:
             wandb.log({f"ROC_curve_{class_label}": wandb.plot.roc_curve(
-                class_true_labels, class_scores, ["Other", class_label]
+                y_true=class_true_labels, 
+                y_probas=class_scores, 
+                labels=["Other", class_label],
+                title=f"{tag} ROC - {class_label} vs others"
                 )
             })
 
-    def log_confusion_matrix(self, test_true_labels, test_predictions):
+    def log_confusion_matrix(self, test_true_labels, test_predictions, tag):
         if not self.disable_logging:
-            wandb.log({"Test Confusion Matrix": wandb.plot.confusion_matrix(
+            wandb.log({f"{tag} Confusion Matrix": wandb.plot.confusion_matrix(
                 probs=None,
                 y_true=test_true_labels,
                 preds=test_predictions,

@@ -21,6 +21,66 @@ from class_mapping import ClassMapping
 from sklearn.metrics import accuracy_score, f1_score, roc_curve, confusion_matrix, recall_score, precision_score
 import matplotlib.pyplot as plt
 
+def report_results(y_true, y_pred, tag):
+    # Calculate test accuracy
+    test_acc = accuracy_score(y_true, y_pred)
+    wandb_logger.log_test_accuracy(test_acc)
+    # print(f"{tag} ACCURACY: {test_acc}")
+
+    # Calculate F1 score for test set
+    test_f1 = f1_score(y_true, y_pred, average='weighted')
+    wandb_logger.log_f1_score(test_f1)
+    # print(f"{tag} F1 SCORE: {test_f1}")
+
+    # Calculate recall for test set
+    test_recall = recall_score(y_true, y_pred, average='weighted')
+    wandb_logger.log_recall(test_recall)
+    # print(f"{tag} RECALL: {test_recall}")
+
+    # Calculate precision for test set
+    precision = precision_score(y_true, y_pred, average='weighted')
+    wandb_logger.log_precision(precision)
+    # print(f"{tag} PRECISION: {precision}")
+
+    # Calculate confusion matrix for test set
+    cm = confusion_matrix(y_true, y_pred)
+    wandb_logger.log_confusion_matrix(y_true, y_pred, tag)
+    # print(f"{tag} CONFUSION MATRIX:\n{cm}")
+
+
+    print(
+        f"{tag} Acc: {test_acc:.4f}, \
+        {tag} F1: {test_f1:.4f}, \
+        {tag} Recall: {test_recall:.4f}, \
+        {tag} Precision: {precision:.4f}, \
+        {tag} CM:\n{cm}"
+    )
+
+def report_roc(true_labels, class_probs, matplot: bool, tag):
+    num_classes = len(np.unique(true_labels))
+    true_labels = np.array(true_labels)
+    class_probs = np.array(class_probs)
+
+    if matplot: plt.figure(figsize=(8, 6))
+    for class_idx in range(num_classes):
+        class_true_labels = (true_labels == class_idx).astype(int)
+        class_scores = class_probs[:, class_idx]
+        label = ClassMapping.get_label(class_idx)
+        y_probas = np.column_stack((1 - class_scores, class_scores))
+
+        wandb_logger.log_roc_curve(class_true_labels, y_probas, label, tag)
+        
+        fpr, tpr, _ = roc_curve(class_true_labels, class_scores)
+        if matplot: plt.plot(fpr, tpr, label=f"Class {label}")
+    if matplot: 
+        plt.plot([0, 1], [0, 1], linestyle='--', color='gray', label='Random Guess')
+        plt.xlabel('False Positive Rate')
+        plt.ylabel('True Positive Rate')
+        plt.title('ROC Curve for each class')
+        plt.legend()
+        plt.grid(True)
+        plt.show()
+
 if __name__ == "__main__":
     ### WANDB
     load_dotenv()
@@ -41,7 +101,7 @@ if __name__ == "__main__":
     )
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    print(f"Found device: {device}")
+    print(f"Found device: {device} / {torch.cuda.get_device_name(torch.cuda.current_device())}")
 
     train_loader, valid_loader, test_loader = DataHandler.get_dataset()
     
@@ -54,7 +114,7 @@ if __name__ == "__main__":
     optimizer = optim.Adam(model.parameters(), lr=hp.learning_rate)
 
     if device == 'cuda:0':
-        model.to(device)
+        model = model.to(device)
 
     if not model_path:
         tic = time.time()
@@ -81,27 +141,37 @@ if __name__ == "__main__":
             correct = 0
             total = 0
             running_val_loss = 0.0
+            val_true = []
+            val_pred = []
+            val_class_probs = []
+
             with torch.no_grad():
                 for inputs, labels in valid_loader:
+                    # inputs, labels = inputs.to(device), labels.to(device)
                     outputs = model(inputs)
                     loss = criterion(outputs, labels)
                     running_val_loss += loss.item()
                     _, predicted = torch.max(outputs.data, 1)
-                    total += labels.size(0)
-                    correct += (predicted == labels).sum().item()
+                    # total += labels.size(0)
+                    # correct += (predicted == labels).sum().item()
+
+                    val_pred.extend(predicted.cpu().numpy())
+                    val_true.extend(labels.cpu().numpy())
+                    val_class_probs.extend(torch.nn.functional.softmax(outputs, dim=1).cpu().numpy())
 
             train_loss = running_loss/len(train_loader)
             val_loss = running_val_loss/len(valid_loader)
-            val_acc = (correct/total)
+            # val_acc = (correct/total)
 
             print(
                 f"Epoch {epoch+1}/{hp.num_epochs}, \
                 Train Loss: {train_loss:.4f}, \
-                Val Loss: {val_loss:.4f}, \
-                Validation Accuracy: {val_acc*100:.2f}%"
+                Val Loss: {val_loss:.4f}"
             )
             wandb_logger.log_loss(train_loss, val_loss)
-            wandb_logger.log_val_accuracy(val_acc)
+            report_results(val_true, val_pred, "VAL")
+            report_roc(val_true, val_class_probs, False, "VAL")
+
 
         toc = time.time()
         wandb_logger.log_time(toc - tic)
@@ -116,6 +186,7 @@ if __name__ == "__main__":
     class_probs = []
     with torch.no_grad():
         for inputs, labels in test_loader:
+            # inputs, labels = inputs.to(device), labels.to(device)
             outputs = model(inputs)
             _, predicted = torch.max(outputs.data, 1)
 
@@ -123,56 +194,8 @@ if __name__ == "__main__":
             test_true_labels.extend(labels.cpu().numpy())
             class_probs.extend(torch.nn.functional.softmax(outputs, dim=1).cpu().numpy())
 
-    # Calculate test accuracy
-    test_acc = accuracy_score(test_true_labels, test_predictions)
-    wandb_logger.log_test_accuracy(test_acc)
-    print(f"TEST ACCURACY: {test_acc}")
-
-    # Calculate F1 score for test set
-    test_f1 = f1_score(test_true_labels, test_predictions, average='weighted')
-    wandb_logger.log_f1_score(test_f1)
-    print(f"TEST F1 SCORE: {test_f1}")
-
-    # Calculate recall for test set
-    test_recall = recall_score(test_true_labels, test_predictions, average='weighted')
-    wandb_logger.log_recall(test_recall)
-    print(f"TEST RECALL: {test_recall}")
-
-    # Calculate precision for test set
-    precision = precision_score(test_true_labels, test_predictions, average='weighted')
-    wandb_logger.log_precision(precision)
-    print(f"TEST PRECISION: {precision}")
-
-    # Calculate confusion matrix for test set
-    cm = confusion_matrix(test_true_labels, test_predictions)
-    wandb_logger.log_confusion_matrix(test_true_labels, test_predictions)
-    print(f"CONFUSION MATRIX:\n{cm}")
-
-    # Calculate ROC curves using One vs. Rest (OvR) strategy
-    num_classes = len(np.unique(test_true_labels))
-    test_true_labels = np.array(test_true_labels)
-    class_probs = np.array(class_probs)
-
-
-    plt.figure(figsize=(8, 6))
-    for class_idx in range(num_classes):
-        class_true_labels = (test_true_labels == class_idx).astype(int)
-        class_scores = class_probs[:, class_idx]
-
-        fpr, tpr, _ = roc_curve(class_true_labels, class_scores)
-        label = ClassMapping.get_label(class_idx)
-        plt.plot(fpr, tpr, label=f"Class {label}")
-        
-        y_probas = np.column_stack((1 - class_scores, class_scores))
-        wandb_logger.log_roc_curve(class_true_labels, y_probas, label)
-
-    plt.plot([0, 1], [0, 1], linestyle='--', color='gray', label='Random Guess')
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    plt.title('ROC Curve for each class')
-    plt.legend()
-    plt.grid(True)
-    plt.show()
+    report_results(test_true_labels, test_predictions, "TEST")
+    report_roc(test_true_labels, class_probs, True, "TEST")
 
     wandb_logger.finish()
 

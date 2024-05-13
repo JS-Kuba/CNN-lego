@@ -1,7 +1,7 @@
 from torchvision import transforms, datasets
 import os
 from torch.utils.data import DataLoader
-
+from hyperparameters import Hyperparameters as hp
 
 class DataHandler:
     @staticmethod
@@ -50,8 +50,8 @@ class DataHandler:
         # print(train_data.imgs)
 
         # Data loaders
-        train_loader = DataLoader(train_data, batch_size=64, shuffle=True)
-        valid_loader = DataLoader(valid_data, batch_size=64, shuffle=False)
-        test_loader = DataLoader(test_data, batch_size=64, shuffle=False)
+        train_loader = DataLoader(train_data, batch_size=hp.batch_size, shuffle=True)
+        valid_loader = DataLoader(valid_data, batch_size=hp.batch_size, shuffle=False)
+        test_loader = DataLoader(test_data, batch_size=hp.batch_size, shuffle=False)
 
         return train_loader, valid_loader, test_loader

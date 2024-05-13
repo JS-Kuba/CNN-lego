@@ -1,11 +1,6 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
-import numpy as np
-from torchvision import transforms, datasets
 import torch
-from torch.utils.data import DataLoader
 
 ### CNN
 class CNN(nn.Module):
