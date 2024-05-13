@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch
+from hyperparameters import Hyperparameters as hp
 
 ### CNN
 class CNN(nn.Module):
@@ -12,6 +13,7 @@ class CNN(nn.Module):
         self.pool = nn.MaxPool2d(2, 2)
         self.fc1 = nn.Linear(128 * 16 * 16, 512)
         self.fc2 = nn.Linear(512, 4)  # 4 classes
+        self.dropout = nn.Dropout(hp.dropout)
 
     def forward(self, x):
         x = self.pool(torch.relu(self.conv1(x)))
