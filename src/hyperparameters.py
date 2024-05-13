@@ -5,7 +5,7 @@ from dataclasses import dataclass
 class Hyperparameters:
     num_epochs: int = 10
     learning_rate: float = 0.001
-    batch_size: int = 64
+    batch_size: int = 16
 
     wandb_config = {
             "num_epochs": num_epochs,
