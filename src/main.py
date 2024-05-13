@@ -40,26 +40,30 @@ if __name__ == "__main__":
         config=hp.wandb_config, dataset=dataset, gpu=os.environ.get("GPU")
     )
 
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    print(f"Found device: {device}")
 
-    ### Get the data
     train_loader, valid_loader, test_loader = DataHandler.get_dataset()
     
     print(f"Train size: {len(train_loader)}")
     print(f"Valid size: {len(valid_loader)}")
     print(f"Test size: {len(test_loader)}")
 
-    # Initialize the model, loss function, and optimizer
     model = CNN()
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=hp.learning_rate)
 
+    if device == 'cuda:0':
+        model.to(device)
+
     if not model_path:
         tic = time.time()
-        # Training loop
         for epoch in range(hp.num_epochs):
             model.train()
             running_loss = 0.0
             for inputs, labels in train_loader:
+                if device == "cuda:0":
+                    inputs, labels = inputs.to(device), labels.to(device)
                 optimizer.zero_grad()
                 outputs = model(inputs)
 
