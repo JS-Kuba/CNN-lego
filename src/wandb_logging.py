@@ -24,26 +24,21 @@ class WandbLogger:
         if not self.disable_logging:
             wandb.log({"train_time": round(time, 3)})
 
-    def log_val_accuracy(self, accuracy):
+    def log_accuracy(self, accuracy, tag):
         if not self.disable_logging:
-            wandb.log({"val_accuracy": accuracy})
-    
-    def log_test_accuracy(self, accuracy):
-        if not self.disable_logging:
-            wandb.log({"test_accuracy": accuracy})
+            wandb.log({f"{tag} accuracy": accuracy})
 
-
-    def log_f1_score(self, f1_score):
+    def log_f1_score(self, f1_score, tag):
         if not self.disable_logging:
-            wandb.log({"f1_score": f1_score})
+            wandb.log({f"{tag} f1_score": f1_score})
 
-    def log_recall(self, recall):
+    def log_recall(self, recall, tag):
         if not self.disable_logging:
-            wandb.log({"recall": recall})
+            wandb.log({f"{tag} recall": recall})
 
-    def log_precision(self, precision):
+    def log_precision(self, precision, tag):
         if not self.disable_logging:
-            wandb.log({"precision": precision})
+            wandb.log({f"{tag} precision": precision})
 
     def log_roc_curve(self, class_true_labels, class_scores, class_label, tag):
         if not self.disable_logging:
@@ -61,7 +56,8 @@ class WandbLogger:
                 probs=None,
                 y_true=test_true_labels,
                 preds=test_predictions,
-                class_names=["Flower", "Leaf", "Stone", "Wood"]
+                class_names=["Flower", "Leaf", "Stone", "Wood"],
+                title=f"{tag} Confusion Matrix"
             )})
 
     def finish(self):

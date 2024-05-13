@@ -24,22 +24,22 @@ import matplotlib.pyplot as plt
 def report_results(y_true, y_pred, tag):
     # Calculate test accuracy
     test_acc = accuracy_score(y_true, y_pred)
-    wandb_logger.log_test_accuracy(test_acc)
+    wandb_logger.log_accuracy(test_acc, tag)
     # print(f"{tag} ACCURACY: {test_acc}")
 
     # Calculate F1 score for test set
     test_f1 = f1_score(y_true, y_pred, average='weighted')
-    wandb_logger.log_f1_score(test_f1)
+    wandb_logger.log_f1_score(test_f1, tag)
     # print(f"{tag} F1 SCORE: {test_f1}")
 
     # Calculate recall for test set
     test_recall = recall_score(y_true, y_pred, average='weighted')
-    wandb_logger.log_recall(test_recall)
+    wandb_logger.log_recall(test_recall, tag)
     # print(f"{tag} RECALL: {test_recall}")
 
     # Calculate precision for test set
     precision = precision_score(y_true, y_pred, average='weighted')
-    wandb_logger.log_precision(precision)
+    wandb_logger.log_precision(precision, tag)
     # print(f"{tag} PRECISION: {precision}")
 
     # Calculate confusion matrix for test set
