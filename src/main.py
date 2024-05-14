@@ -130,6 +130,9 @@ if __name__ == "__main__":
                 # logits = outputs.clone().detach()  # Clone and detach to prevent gradient computation
                 # probs = F.softmax(logits, dim=1)
                 # print(probs)
+                # print(len(inputs))
+                # print(len(labels))
+                # print(len(outputs))
 
                 loss = criterion(outputs, labels)
                 loss.backward()
@@ -138,8 +141,7 @@ if __name__ == "__main__":
 
             # Validation
             model.eval()
-            correct = 0
-            total = 0
+
             running_val_loss = 0.0
             val_true = []
             val_pred = []
@@ -152,8 +154,6 @@ if __name__ == "__main__":
                     loss = criterion(outputs, labels)
                     running_val_loss += loss.item()
                     _, predicted = torch.max(outputs.data, 1)
-                    # total += labels.size(0)
-                    # correct += (predicted == labels).sum().item()
 
                     val_pred.extend(predicted.cpu().numpy())
                     val_true.extend(labels.cpu().numpy())
