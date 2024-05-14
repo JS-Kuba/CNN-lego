@@ -3,10 +3,12 @@ import os
 from torch.utils.data import DataLoader
 from hyperparameters import Hyperparameters as hp
 
+dataset_folder = "dataset_v3"
+
 class DataHandler:
     @staticmethod
     def get_normalization_variables():
-        train_path = os.path.join("..", "dataset_prep", "dataset_v3", "train")
+        train_path = os.path.join("..", "dataset_prep", dataset_folder, "train")
         train_transform = transforms.Compose([
             transforms.ToTensor(),
         ])
@@ -30,9 +32,9 @@ class DataHandler:
 
     @staticmethod
     def get_dataset():
-        train_path = os.path.join("..", "dataset_prep", "dataset_v3", "train")
-        valid_path = os.path.join("..", "dataset_prep", "dataset_v3", "test")
-        test_path = os.path.join("..", "dataset_prep", "dataset_v3", "valid")
+        train_path = os.path.join("..", "dataset_prep", dataset_folder, "train")
+        valid_path = os.path.join("..", "dataset_prep", dataset_folder, "test")
+        test_path = os.path.join("..", "dataset_prep", dataset_folder, "valid")
         nv = DataHandler.get_normalization_variables()
         transform = transforms.Compose(
             [

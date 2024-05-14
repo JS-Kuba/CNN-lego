@@ -28,10 +28,20 @@ if __name__ == "__main__":
     parser.add_argument("--save", action="store_true", help="Save model")
     parser.add_argument('--load', type=str, help='Path to the model')
 
+    parser.add_argument("--batch_size", type=int, help="Batch size for training")
+    parser.add_argument("--num_epochs", type=int, help="Number of epochs for training")
+    parser.add_argument("--learning_rate", type=float, help="Learning rate for training")
+
     args = parser.parse_args()
     disable_logging = args.nolog
     model_path = args.load
     dataset = None
+
+    if args.num_epochs and args.batch_size and args.learning_rate:
+        hp.num_epochs = args.num_epochs
+        hp.batch_size = args.batch_size
+        hp.learning_rate = args.learning_rate
+
     wandb_logger = WandbLogger(disable_logging)
     wandb_logger.initialize(
         config=hp.wandb_config, dataset=dataset, gpu=os.environ.get("GPU")
