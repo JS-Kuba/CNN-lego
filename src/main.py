@@ -59,8 +59,7 @@ if __name__ == "__main__":
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=hp.learning_rate)
 
-    if device == 'cuda:0':
-        model = model.to(device)
+    model.to(device)
 
     if not model_path:
         tic = time.time()
@@ -68,8 +67,8 @@ if __name__ == "__main__":
             model.train()
             running_loss = 0.0
             for inputs, labels in train_loader:
-                if device == "cuda:0":
-                    inputs, labels = inputs.to(device), labels.to(device)
+                # if device == "cuda:0":
+                inputs, labels = inputs.to(device), labels.to(device)
                 optimizer.zero_grad()
                 outputs = model(inputs)
                 loss = criterion(outputs, labels)
@@ -77,9 +76,10 @@ if __name__ == "__main__":
                 optimizer.step()
                 running_loss += loss.item()
 
+            train_loss = running_loss/len(train_loader)
+
             # Validation
             model.eval()
-
             running_val_loss = 0.0
             val_true = []
             val_pred = []
@@ -87,6 +87,7 @@ if __name__ == "__main__":
 
             with torch.no_grad():
                 for inputs, labels in valid_loader:
+                    inputs, labels = inputs.to(device), labels.to(device)
                     outputs = model(inputs)
                     loss = criterion(outputs, labels)
                     running_val_loss += loss.item()
@@ -95,8 +96,6 @@ if __name__ == "__main__":
                     val_pred.extend(predicted.cpu().numpy())
                     val_true.extend(labels.cpu().numpy())
                     val_class_probs.extend(torch.nn.functional.softmax(outputs, dim=1).cpu().numpy())
-
-            train_loss = running_loss/len(train_loader)
             val_loss = running_val_loss/len(valid_loader)
 
             print(
@@ -122,6 +121,7 @@ if __name__ == "__main__":
     class_probs = []
     with torch.no_grad():
         for inputs, labels in test_loader:
+            inputs, labels = inputs.to(device), labels.to(device)
             outputs = model(inputs)
             _, predicted = torch.max(outputs.data, 1)
 
